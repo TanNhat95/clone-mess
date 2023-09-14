@@ -1,10 +1,13 @@
 'use client'
+import axios from 'axios'
 import Button from '@/app/components/Button'
 import InputField from '@/app/components/input/input'
 import React, { useCallback, useState } from 'react'
 import { useForm, FieldValues, SubmitHandler} from 'react-hook-form'
 import AuthSocialButton from './AuthSocialButton'
 import { BsFacebook, BsGoogle } from 'react-icons/bs'
+import { toast } from 'react-hot-toast'
+import { signIn} from 'next-auth/react'
 
 type Variant = 'LOGIN' | 'REGISTER'
 
@@ -37,11 +40,26 @@ const AuthForm = () => {
     const onSubmit: SubmitHandler<FieldValues> = (data) => {
         setIsLoading(true)
         if(variant === 'REGISTER') {
-            //Axios register
+            axios.post('/api/register', data)
+            .catch(() => toast.error('Something went wrong !!!'))
+            .finally(() => setIsLoading(false))
         }
 
         if(variant === 'LOGIN') {
-            //NextAuth Signin
+            signIn('credentials', {
+                ...data,
+                redirect: false,
+            })
+            .then((callback) => {
+                if(callback?.error) {
+                    toast.error('Invalid credentials')
+                }
+
+                if(callback?.ok && !callback?.error) {
+                    toast.success('Logged in !!!')
+                }
+            })
+            .finally(() => setIsLoading(false))
         }
     }
 
@@ -75,7 +93,7 @@ const AuthForm = () => {
                 {variant === 'REGISTER' && (
                     <InputField 
                         label='Name' 
-                        id='email' 
+                        id='name' 
                         register={register}
                         errors={errors}
                         disabled={isLoading}
@@ -92,7 +110,7 @@ const AuthForm = () => {
                 <InputField 
                     label='Password'
                     type='password'
-                    id='email' 
+                    id='password' 
                     register={register}
                     errors={errors}
                     disabled={isLoading}
