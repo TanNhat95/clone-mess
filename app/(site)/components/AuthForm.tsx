@@ -5,7 +5,7 @@ import InputField from '@/app/components/input/input'
 import React, { useCallback, useState } from 'react'
 import { useForm, FieldValues, SubmitHandler} from 'react-hook-form'
 import AuthSocialButton from './AuthSocialButton'
-import { BsFacebook, BsGoogle } from 'react-icons/bs'
+import { BsGithub, BsGoogle } from 'react-icons/bs'
 import { toast } from 'react-hot-toast'
 import { signIn} from 'next-auth/react'
 
@@ -52,7 +52,7 @@ const AuthForm = () => {
             })
             .then((callback) => {
                 if(callback?.error) {
-                    toast.error('Invalid credentials')
+                    toast.error('Invalid username or password')
                 }
 
                 if(callback?.ok && !callback?.error) {
@@ -65,8 +65,17 @@ const AuthForm = () => {
 
     const socialAction = (action: string) => {
         setIsLoading(true)
-        //NextAuth Signin
+        signIn(action, { redirect: false})
+        .then((callback) => {
+            if(callback?.error) {
+                toast.error('Invalid credentials')
+            }
 
+            if(callback?.ok && !callback?.error) {
+                toast.success('Logged in!')
+            }
+        })
+        .finally(() => setIsLoading(false))
 
     }
   return (
@@ -138,8 +147,8 @@ const AuthForm = () => {
                 
                 <div className='flex gap-2 mt-6'>
                     <AuthSocialButton 
-                        icon={BsFacebook}
-                        onClick={() => socialAction('facebook')}    
+                        icon={BsGithub}
+                        onClick={() => socialAction('github')}
                     />
                     <AuthSocialButton 
                         icon={BsGoogle}
