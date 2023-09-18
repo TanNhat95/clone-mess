@@ -1,19 +1,29 @@
 'use client'
 import axios from 'axios'
 import Button from '@/app/components/Button'
-import InputField from '@/app/components/input/input'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useForm, FieldValues, SubmitHandler} from 'react-hook-form'
 import AuthSocialButton from './AuthSocialButton'
 import { BsGithub, BsGoogle } from 'react-icons/bs'
 import { toast } from 'react-hot-toast'
-import { signIn} from 'next-auth/react'
+import { signIn, useSession} from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import InputField from '@/app/components/input/Input'
 
 type Variant = 'LOGIN' | 'REGISTER'
 
 const AuthForm = () => {
+    const session =  useSession()
+    const router =  useRouter()
     const [variant, setVariant] = useState<Variant>('LOGIN')
     const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        console.log(session)
+        if(session?.status === 'authenticated')  {
+            router.push('/users')
+        }
+    },[router, session?.status])
 
     const toggleVariant = useCallback(() => {
         if(variant === 'LOGIN') {
@@ -41,6 +51,7 @@ const AuthForm = () => {
         setIsLoading(true)
         if(variant === 'REGISTER') {
             axios.post('/api/register', data)
+            .then(() => signIn('credentials', data))
             .catch(() => toast.error('Something went wrong !!!'))
             .finally(() => setIsLoading(false))
         }
@@ -95,31 +106,31 @@ const AuthForm = () => {
             sm:rounded-lg
             sm:px-10
         '>
-            <form 
+            <form
                 className='space-y-6'
                 onSubmit={handleSubmit(onSubmit)}
             >
                 {variant === 'REGISTER' && (
-                    <InputField 
-                        label='Name' 
-                        id='name' 
+                    <InputField
+                        label='Name'
+                        id='name'
                         register={register}
                         errors={errors}
                         disabled={isLoading}
                     />
                 )}
-                <InputField 
+                <InputField
                     label='Email'
                     type='email'
-                    id='email' 
+                    id='email'
                     register={register}
                     errors={errors}
                     disabled={isLoading}
                 />
-                <InputField 
+                <InputField
                     label='Password'
                     type='password'
-                    id='password' 
+                    id='password'
                     register={register}
                     errors={errors}
                     disabled={isLoading}
@@ -146,13 +157,13 @@ const AuthForm = () => {
                 </div>
                 
                 <div className='flex gap-2 mt-6'>
-                    <AuthSocialButton 
+                    <AuthSocialButton
                         icon={BsGithub}
                         onClick={() => socialAction('github')}
                     />
-                    <AuthSocialButton 
+                    <AuthSocialButton
                         icon={BsGoogle}
-                        onClick={() => socialAction('google')}    
+                        onClick={() => socialAction('google')}
                     />
                 </div>
             </div>
