@@ -26,7 +26,7 @@ const MobileFooter = () => {
             lg:hidden
         ">
             {routes.map((item) => (
-                <MobileItem 
+                <MobileItem
                     key={item.href}
                     label={item.label}
                     href={item.href}
