@@ -1,6 +1,7 @@
 import getCurrentUser from "@/app/actions/getCurrentUser"
 import { NextResponse } from "next/server"
 import prisma from '@/app/libs/prismadb'
+import { pusherServer } from "@/app/libs/pusher"
 
 type IParams = {
     conversationId?: string
@@ -59,6 +60,19 @@ export async function POST(
                 }
             }
         })
+
+        await pusherServer.trigger(currentUser.email, 'conversation:update', {
+            id: conversationId,
+            messages: [updatedMessage]
+        })
+
+        // if user did not see the last message that means that user are not in the array scene
+        if(lastMessage.seenIds.indexOf(currentUser.id) !== -1) {
+            return NextResponse.json(conversation)
+        }
+
+        await pusherServer.trigger(conversationId!, 'message:update', updatedMessage)
+
         return NextResponse.json(updatedMessage)
 
     } catch (error) {

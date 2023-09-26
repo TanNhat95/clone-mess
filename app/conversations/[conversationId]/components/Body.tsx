@@ -6,6 +6,8 @@ import { Message, User } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
 import MessageBox from "./MessageBox";
 import axios from "axios";
+import { pusherClient } from "@/app/libs/pusher";
+import { find } from "lodash";
 
 type BodyProps = {
     initialMessages: FullMessageType[]
@@ -20,6 +22,44 @@ const Body: React.FC<BodyProps> = ({ initialMessages }) => {
 
     useEffect(() => {
         axios.post(`/api/conversations/${conversationId}/seen`)
+    }, [conversationId])
+
+    //subscribe pusher and expect all events
+    useEffect(() => {
+        pusherClient.subscribe(conversationId)
+        bottomRef?.current?.scrollIntoView()
+
+        const messageHandle = (message: FullMessageType) => {
+            axios.post(`/api/conversations/${conversationId}/seen`)
+
+            setMessages((currentMessages) => {
+                if (find(currentMessages, {id: message.id})) {
+                    return currentMessages
+                }
+                return [...currentMessages, message]
+            })
+
+            bottomRef?.current?.scrollIntoView()
+        }
+
+        const updateMessageHandler = (newMessage: FullMessageType) => {
+            setMessages((current) => current.map((currentMessage) => {
+                if (currentMessage.id === newMessage.id) {
+                    return newMessage
+                }
+                return currentMessage
+            }))
+        }
+
+        pusherClient.bind('messages:new', messageHandle)
+        pusherClient.bind('message:update', updateMessageHandler)
+
+
+        return () => {
+            pusherClient.unbind('messages:new',messageHandle)
+            pusherClient.unsubscribe(conversationId)
+            pusherClient.unbind('message:update', updateMessageHandler)
+        }
     }, [conversationId])
 
     return (

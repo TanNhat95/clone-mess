@@ -11,7 +11,6 @@ type UserBoxProps = {
 }
 
 const UserBox: React.FC<UserBoxProps> = ({data}) => {
-    console.log(data?.id)
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
 
@@ -20,7 +19,6 @@ const UserBox: React.FC<UserBoxProps> = ({data}) => {
 
         axios.post('/api/conversations', {userId: data.id})
         .then((data) => {
-            console.log('data in UserBox',data.data)
             router.push(`/conversations/${data.data.id}`)
         })
         .finally(() => setIsLoading(false))
